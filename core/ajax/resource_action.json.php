@@ -34,12 +34,15 @@ if (! $res && file_exists("../../../../main.inc.php")) $res=@include '../../../.
 if (! $res) die("Include of main fails");
 // Change this following line to use the correct relative path from htdocs
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
 dol_include_once('/resource/class/resource.class.php');
 
 // Load traductions files requiredby by page
 $langs->load("companies");
 $langs->load("other");
+
+$langs->load("conference@conference");
 
 // Get parameters
 $id				= GETPOST('id','int');
@@ -135,8 +138,8 @@ if ($resql)
         }
 
         $event->id=$obj->id;
-        $event->datep=$db->jdate($obj->datep);      // datep and datef are GMT date
-        $event->datef=$db->jdate($obj->datep2);
+        $event->datep=dol_print_date($db->jdate($obj->datep),'dayhourrfc');      // datep and datef are GMT date
+        $event->datef=dol_print_date($db->jdate($obj->datep2),'dayhourrfc');
         $event->code=$obj->code;
         $event->action_code = $langs->transnoentities("Action".$obj->code);
         $event->libelle=$obj->label;
@@ -167,13 +170,14 @@ else
 $event_json = array();
 foreach($eventarray as $day => $event) {
 
-	$description = $event->note;
+    $description = '<strong>'.dol_print_date(dol_stringtotime($event->datep,0),'dayhour').' to '.dol_print_date(dol_stringtotime($event->datef,0),'dayhour').'</strong><br />';
+	$description.= $event->note;
 	$event_resources = array();
 	if(is_array($event->resources) && count($event->resources) > 0)
 	{
-		$description.="<br><strong>".$langs->trans('Ressources')."</strong><br>";
+		$description.="<br /><strong>".$langs->trans('Ressources')."</strong><br>";
 		foreach($event->resources as $resource_event) {
-			$description.= $resource_event->getNomUrl();
+			$description.= $resource_event->getNomUrl(1);
 			$description.= '<br>';
 			$event_resources[] = $resource_event->id;
 		}
@@ -185,7 +189,7 @@ foreach($eventarray as $day => $event) {
 			'id' => $event->id,
 			'title' =>  $event->libelle,
 			'code' => $event->code,
-			'action_code' => $event->action_code,
+			'action_code' => $langs->trans($event->action_code),
 			'description' =>  $description,
 			'start' => $event->datep,
 			'end' => $event->datef,
