@@ -446,7 +446,6 @@ class Resource extends CommonObject
 		global $conf;
 
 		$element_prop = $this->getElementProperties($element_type);
-
 		if (is_array($element_prop) && $conf->$element_prop['module']->enabled)
 		{
 			$classpath = '/'.$element_prop['classpath'].'/'.$element_prop['classfile'].'.class.php';
@@ -566,9 +565,9 @@ class Resource extends CommonObject
 	    return $resources;
     }
 
-    function fetchElementResources($element,$element_id)
+    function fetchElementResources($element,$element_id,$resource_type='')
     {
-    	$resources = $this->getElementResources($element,$element_id);
+    	$resources = $this->getElementResources($element,$element_id,$resource_type);
     	$i=0;
     	foreach($resources as $resource)
     	{
@@ -621,6 +620,56 @@ class Resource extends CommonObject
     		dol_syslog(get_class($this)."::delete_resource error=".$this->error, LOG_ERR);
     		return -1;
     	}
+    }
+    
+    /**
+     * 
+     * @param unknown $ressource_id
+     * @param unknown $resource_type
+     * @param unknown $datep
+     * @param unknown $datef
+     */
+    function getActionsUsedResourceForPeriod($ressource_id,$resource_type,$datep,$datef)
+    {
+        global $conf;
+        
+        $events = array();
+        
+        $sql = "SELECT";
+        $sql.= " a.id, a.datep, a.datep2, a.durationp, a.label";
+        $sql.= ", er.resource_type, er.resource_id, er.busy, er.mandatory";
+        $sql.= " FROM ".MAIN_DB_PREFIX."element_resources as er";
+        $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."actioncomm as a ON a.id=er.element_id";
+        $sql.= " WHERE a.entity IN (" . getEntity ( 'resource' ) . ")";
+        
+        $sql.=" AND er.resource_type='".$resource_type."' AND er.element_type='action' AND er.resource_id=$ressource_id";
+        $sql.=" AND a.datep BETWEEN '".$this->db->idate($datep)."' AND '".$this->db->idate($datef)."'";
+        $sql.=" OR a.datep2 BETWEEN '".$this->db->idate($datep)."' AND '".$this->db->idate($datef)."'";
+            
+        dol_syslog(get_class($this)."::isUsedResourceForPeriod sql=".$sql);
+        
+        $resql = $this->db->query($sql);
+        if ($resql)
+        {
+            $num = $this->db->num_rows($resql);
+            $i = 0;
+            while ($i < $num)
+            {
+                $obj = $this->db->fetch_object($resql);
+        
+                $events[$i] = array(
+                    'rowid' => $obj->id,
+                    'label' => $obj->label,
+                    'datep' => $this->db->jdate($obj->datep),
+                    'datef' => $this->db->jdate($obj->datep2),
+                    'duration'=> $obj->durationp,
+                    'busy'=>$obj->busy,
+                    'mandatory'=>$obj->mandatory
+                );
+                $i++;
+            }
+        }
+        return $events;
     }
 
 }
