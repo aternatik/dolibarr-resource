@@ -641,14 +641,14 @@ class Resource extends CommonObject
         $sql.= " FROM ".MAIN_DB_PREFIX."element_resources as er";
         $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."actioncomm as a ON a.id=er.element_id";
         $sql.= " WHERE a.entity IN (" . getEntity ( 'resource' ) . ")";
-        
         $sql.=" AND er.resource_type='".$resource_type."' AND er.element_type='action' AND er.resource_id=$ressource_id";
-        $sql.=" AND a.datep BETWEEN '".$this->db->idate($datep)."' AND '".$this->db->idate($datef)."'";
-        $sql.=" OR a.datep2 BETWEEN '".$this->db->idate($datep)."' AND '".$this->db->idate($datef)."'";
-            
+	$sql.=" AND (a.datep >='".$this->db->idate($datep)."' AND a.datep <='".$this->db->idate($datef)."')";
+	$sql.=" OR (a.datep2 >='".$this->db->idate($datep)."' AND a.datep2<='".$this->db->idate($datef)."')"; 
+	$sql.=" GROUP BY a.id";
+
         dol_syslog(get_class($this)."::isUsedResourceForPeriod sql=".$sql);
         
-        $resql = $this->db->query($sql);
+	$resql = $this->db->query($sql);
         if ($resql)
         {
             $num = $this->db->num_rows($resql);
@@ -663,6 +663,7 @@ class Resource extends CommonObject
                     'datep' => $this->db->jdate($obj->datep),
                     'datef' => $this->db->jdate($obj->datep2),
                     'duration'=> $obj->durationp,
+                    'resource_id' => $obj->resource_id,
                     'busy'=>$obj->busy,
                     'mandatory'=>$obj->mandatory
                 );
