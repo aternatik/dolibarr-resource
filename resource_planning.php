@@ -33,6 +33,7 @@ if (! $res) die("Include of main fails");
 
 require_once('class/resource.class.php');
 require_once('class/html.formresource.class.php');
+include_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
 
 // Translations
 $langs->load("companies");
@@ -42,15 +43,20 @@ $langs->load("other");
 
 $form = new Form($db);
 $formresource = new FormResource($db);
+$formaction = new FormResource($db);
+$formactions=new FormActions($db);
 
 $fk_resource=GETPOST('fk_resource');
+$actioncode=GETPOST("actioncode","alpha",3)?GETPOST("actioncode","alpha",3):(GETPOST("actioncode")=='0'?'0':(empty($conf->global->AGENDA_USE_EVENT_TYPE)?'AC_OTH':''));
+
 
 /***************************************************
 * VIEW
 ****************************************************/
 $morecss=array(
 	"/resource/js/fullcalendar/fullcalendar.css",
-	"/resource/js/jquery.qtip.css"
+	"/resource/js/jquery.qtip.css",
+    "/resource/inc/multiselect/css/ui.multiselect.css"
 );
 
 $morejs=array(
@@ -151,7 +157,8 @@ jQuery(document).ready(function() {
             url: "'.dol_buildpath('/resource/core/ajax/resource_action.json.php?action=events',1).'",
             type: "POST",
             data: {
-                fk_resource: '.(is_array($fk_resource)?json_encode($fk_resource):'"'.$fk_resource.'"').'
+                fk_resource: '.(is_array($fk_resource)?json_encode($fk_resource):'"'.$fk_resource.'"').',
+                actioncode: "'.$actioncode.'"
             },
             error: function() {
                 alert("there was an error while fetching events!");
@@ -200,7 +207,10 @@ print '</form>';
 
 print '<form action="'.$_SERVER['PHP_SELF'].'" method="POST">';
 print $formresource->select_resource_list_multi($fk_resource,'fk_resource',$filter='', 0, 500);
-print '<input type="submit" value="'.$langs->trans('Filter').'"  name="filter_resource">';
+
+print '<br />';
+print $formactions->select_type_actions($actioncode, "actioncode", '', (empty($conf->global->AGENDA_USE_EVENT_TYPE) ? 1 : 0));
+print ' <input type="submit" value="'.$langs->trans('Filter').'"  name="filter_resource" class="submit">';
 print '</form>';
 
 print '<div id="calendar"></div>';

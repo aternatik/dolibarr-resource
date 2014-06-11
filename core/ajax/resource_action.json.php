@@ -47,6 +47,7 @@ $langs->load("conference@conference");
 // Get parameters
 $id				= GETPOST('id','int');
 $action			= GETPOST('action','alpha');
+$actioncode		= GETPOST('actioncode','alpha');
 
 $start			= GETPOST('start','int');
 $end			= GETPOST('end','int');
