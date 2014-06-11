@@ -638,17 +638,21 @@ class Resource extends CommonObject
         $sql = "SELECT";
         $sql.= " a.id, a.datep, a.datep2, a.durationp, a.label";
         $sql.= ", er.resource_type, er.resource_id, er.busy, er.mandatory";
-        $sql.= " FROM ".MAIN_DB_PREFIX."element_resources as er";
-        $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."actioncomm as a ON a.id=er.element_id";
+        //$sql.= " FROM ".MAIN_DB_PREFIX."element_resources as er";
+        //$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."actioncomm as a ON a.id=er.element_id";
+        $sql.= " FROM ".MAIN_DB_PREFIX."actioncomm as a ";
+        $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."element_resources as er ON a.id=er.element_id";
         $sql.= " WHERE a.entity IN (" . getEntity ( 'resource' ) . ")";
         $sql.=" AND er.resource_type='".$resource_type."' AND er.element_type='action' AND er.resource_id=$ressource_id";
-	$sql.=" AND (a.datep >='".$this->db->idate($datep)."' AND a.datep <='".$this->db->idate($datef)."')";
-	$sql.=" OR (a.datep2 >='".$this->db->idate($datep)."' AND a.datep2<='".$this->db->idate($datef)."')"; 
-	$sql.=" GROUP BY a.id";
+    	$sql.=" AND ((a.datep >='".$this->db->idate($datep)."' AND a.datep <='".$this->db->idate($datef)."')";
+    	$sql.=" OR (a.datep2 >='".$this->db->idate($datep)."' AND a.datep2<='".$this->db->idate($datef)."'))"; 
+    	$sql.=" AND a.fk_element IS NOT NULL AND a.elementtype IS NOT NULL";
+    	$sql.=" GROUP BY a.id";
 
         dol_syslog(get_class($this)."::isUsedResourceForPeriod sql=".$sql);
         
-	$resql = $this->db->query($sql);
+	   $resql = $this->db->query($sql);
+	
         if ($resql)
         {
             $num = $this->db->num_rows($resql);
@@ -664,6 +668,7 @@ class Resource extends CommonObject
                     'datef' => $this->db->jdate($obj->datep2),
                     'duration'=> $obj->durationp,
                     'resource_id' => $obj->resource_id,
+                    'resource_type' => $obj->resource_type,
                     'busy'=>$obj->busy,
                     'mandatory'=>$obj->mandatory
                 );
