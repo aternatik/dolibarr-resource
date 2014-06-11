@@ -207,9 +207,10 @@ class Resource extends CommonObject
      *  @param	int			$limit		  limit page
      *  @param	int			$offset    	  page
      *  @param	array		$filter    	  filter output
+     *  @param  array       $limit_ids      Only select IDS
      *  @return int          	<0 if KO, >0 if OK
      */
-    function fetch_all_used($sortorder="ASC", $sortfield="t.rowid", $limit=0, $offset=0, $filter=array())
+    function fetch_all_used($sortorder="ASC", $sortfield="t.rowid", $limit=0, $offset=0, $filter=array(),$limit_ids=array())
     {
 	//FIXME: limit and offset shouldn't be required
     	$sql="SELECT ";
@@ -224,7 +225,10 @@ class Resource extends CommonObject
     	$sql.= " t.tms";
     	$sql.= ' FROM '.MAIN_DB_PREFIX .'element_resources as t ';
     	//$sql.= " WHERE t.entity IN (".getEntity('resource').")";
-
+    	if(is_array($limit_ids) and count($limit_ids) > 0)
+    	{
+    	    $sql.= " WHERE t.resource_id IN (".$this->db->escape(implode(',',$limit_ids)).")";
+    	}
     	//Manage filter
     	if (!empty($filter)){
     		foreach($filter as $key => $value) {

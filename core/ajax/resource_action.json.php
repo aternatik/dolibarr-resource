@@ -129,11 +129,11 @@ if ($resql)
         $resources = $resourcestat->getElementResources($event->element,$obj->id);
         if(is_array($resources) && count($resources) > 0)
         {
-	        $i=0;
+	        $j=0;
 	        foreach($resources as $nb => $resource)
 	        {
 	        	$event->resources[$i] = $resourcestat->fetchObjectByElement($resource['resource_id'],$resource['resource_type']);
-	        	$i++;
+	        	$j++;
 	        }
         }
 
@@ -206,12 +206,15 @@ foreach($eventarray as $day => $event) {
 // FIXME: limit shouldn't be needed
 $resourcestat = new Resource($db);
 $resource_json = array();
-$resourcestat->fetch_all_used('ASC', 't.rowid', 1000000,0);
-foreach($resourcestat->lines as $resource) {
-		$resource_json[] = array(
-			'name' => $resource->objresource->ref,
-			'id' => $resource->objresource->id
-		);
+$resourcestat->fetch_all_used('ASC', 't.rowid', 1000000,0,'',$fk_resource);
+if(is_array($resourcestat->lines))
+{
+    foreach($resourcestat->lines as $resource) {
+    		$resource_json[] = array(
+    			'name' => $resource->objresource->ref,
+    			'id' => $resource->objresource->id
+    		);
+    }    
 }
 
 header('Content-Type: application/json');

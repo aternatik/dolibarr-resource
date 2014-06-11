@@ -31,6 +31,9 @@ if (! $res && file_exists("../../../main.inc.php")) $res=@include '../../../main
 
 if (! $res) die("Include of main fails");
 
+require_once('class/resource.class.php');
+require_once('class/html.formresource.class.php');
+
 // Translations
 $langs->load("companies");
 $langs->load("other");
@@ -38,7 +41,9 @@ $langs->load("other");
 //FIXME: missing rights enforcement
 
 $form = new Form($db);
+$formresource = new FormResource($db);
 
+$fk_resource=GETPOST('fk_resource');
 
 /***************************************************
 * VIEW
@@ -95,6 +100,17 @@ $dayNamesShort=array(
 		'"'.$langs->trans('FridayMin').'"',
 		'"'.$langs->trans('SaturdayMin').'"');
 
+
+if(is_array($fk_resource))
+{
+    $params='';
+    foreach($fk_resource as $id_res)
+    {
+        $params.='&fk_resource[]='.$id_res;
+    }
+}
+
+
 $fullcalendar = '<script type="text/javascript" language="javascript">
 jQuery(document).ready(function() {
 	$("#calendar").fullCalendar({
@@ -110,7 +126,7 @@ jQuery(document).ready(function() {
 	dayNamesShort: ['.implode(',',$dayNamesShort).'],
 	defaultView: \'resourceWeek\',
 	maxTime: 23.9, // Work around a display bug on the resourceDay view, see https://github.com/jarnokurlin/fullcalendar/issues/15
-	resources: "' . dol_buildpath('/resource/core/ajax/resource_action.json.php?action=resource', 1) . '",
+	resources: "' . dol_buildpath('/resource/core/ajax/resource_action.json.php', 1) . '?action=resource'.$params.'",
 	buttonText: {
 		today: \''.$langs->trans('Today').'\',
 		month: \''.$langs->trans('Month').'\',
@@ -135,7 +151,7 @@ jQuery(document).ready(function() {
             url: "'.dol_buildpath('/resource/core/ajax/resource_action.json.php?action=events',1).'",
             type: "POST",
             data: {
-                fk_resource: "'.$fk_resource.'"
+                fk_resource: '.(is_array($fk_resource)?json_encode($fk_resource):'"'.$fk_resource.'"').'
             },
             error: function() {
                 alert("there was an error while fetching events!");
@@ -160,13 +176,32 @@ jQuery(document).ready(function() {
 });
 </script>';
 
+$fullcalendar.= '<script type="text/javascript">
+jQuery(document).ready(function () {
+	jQuery.extend($.ui.multiselect.locale, {
+		addAll:"'.$langs->transnoentities("AddAll").'",
+		removeAll:"'.$langs->transnoentities("RemoveAll").'",
+		itemsCount:"'.$langs->transnoentities("ItemsCount").'"
+	});
+
+	jQuery(function(){
+	  jQuery(".multiselect").multiselect({sortable: false, searchable: false});
+	});
+});
+</script>';
+
 
 llxHeader($fullcalendar, $title, '', '', 0, 0, $morejs, $morecss);
 
-
+print '<form action="'.$_SERVER['PHP_SELF'].'" >';
 print $form->select_date($select_start_date, 'select_start_date', 0, 0, 1,'',1,1);
 print '<input type="button" value="'.$langs->trans('GotoDate').'" id="gotodate" name="gotodate">';
+print '</form>';
 
+print '<form action="'.$_SERVER['PHP_SELF'].'" method="POST">';
+print $formresource->select_resource_list_multi($fk_resource,'fk_resource',$filter='', 0, 500);
+print '<input type="submit" value="'.$langs->trans('Filter').'"  name="filter_resource">';
+print '</form>';
 
 print '<div id="calendar"></div>';
 
