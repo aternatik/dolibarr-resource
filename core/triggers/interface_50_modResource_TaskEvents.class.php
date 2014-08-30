@@ -213,14 +213,18 @@ class InterfaceTaskEvents
 	 */
 	protected function modifyEvent($user) {
 		$event = $this->getEvent();
-		$event->code = 'AC_TASKEVENT_MODIFY';
-		$event->fk_project = $this->_task->fk_project;
-		$event->label = $this->_task->label;
-		$event->datep = $this->_task->date_start;
-		$event->datef = $this->_task->date_end;
-		$event->percentage = $this->_task->progress;
-		$event->note = $this->_task->description;
-		return $event->update($user, true);
+		
+		// Case of task modified without event orignally created
+		if(is_object($event)) {
+			$event->code = 'AC_TASKEVENT_MODIFY';
+			$event->fk_project = $this->_task->fk_project;
+			$event->label = $this->_task->label;
+			$event->datep = $this->_task->date_start;
+			$event->datef = $this->_task->date_end;
+			$event->percentage = $this->_task->progress;
+			$event->note = $this->_task->description;
+			return $event->update($user, true);
+		}
 	}
 
 	/**
